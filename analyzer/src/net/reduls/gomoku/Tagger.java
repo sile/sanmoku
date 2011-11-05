@@ -20,8 +20,8 @@ public final class Tagger {
 
     public static List<Morpheme> parse(String text, List<Morpheme> result) {
         for(ViterbiNode vn=parseImpl(text); vn!=null; vn=vn.prev) {
-            final String surface = text.substring(vn.start, vn.start+vn.length);
-            final String feature = PartsOfSpeech.get(vn.posId);
+            final String surface = text.substring(vn.start, vn.start+vn.length());
+            final String feature = PartsOfSpeech.get(vn.posId());
             result.add(new Morpheme(surface, feature, vn.start));
         }
         return result;
@@ -33,7 +33,7 @@ public final class Tagger {
 
     public static List<String> wakati(String text, List<String> result) {
         for(ViterbiNode vn=parseImpl(text); vn!=null; vn=vn.prev)
-            result.add(text.substring(vn.start, vn.start+vn.length));
+            result.add(text.substring(vn.start, vn.start+vn.length()));
         return result;
     }
     
@@ -71,11 +71,11 @@ public final class Tagger {
 
     private static ViterbiNode setMincostNode(ViterbiNode vn, ArrayList<ViterbiNode> prevs) {
         final ViterbiNode f = vn.prev = prevs.get(0);
-        int minCost = f.cost + Matrix.linkCost(f.posId, vn.posId);
+        int minCost = f.cost + Matrix.linkCost(f.posId(), vn.posId());
         
         for(int i=1; i < prevs.size(); i++) {
             final ViterbiNode p = prevs.get(i);
-            final int cost = p.cost + Matrix.linkCost(p.posId, vn.posId);
+            final int cost = p.cost + Matrix.linkCost(p.posId(), vn.posId());
 
             if(cost < minCost) {
                 minCost = cost;
@@ -105,10 +105,10 @@ public final class Tagger {
 
         public void call(ViterbiNode vn) {
             empty=false;
-            if(vn.isSpace)
-                nodesAry.get(i+vn.length).addAll(prevs);
+            if(vn.isSpace())
+                nodesAry.get(i+vn.length()).addAll(prevs);
             else
-                nodesAry.get(i+vn.length).add(setMincostNode(vn, prevs));
+                nodesAry.get(i+vn.length()).add(setMincostNode(vn, prevs));
         }
         
         public boolean isEmpty() { return empty; }
