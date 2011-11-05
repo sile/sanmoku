@@ -52,11 +52,13 @@ public final class Tagger {
                 fn.set(i);
                 WordDic.search(text, i, fn);
                 Unknown.search(text, i, fn);
+
+                if(i>0)
+                    nodesAry.get(i).clear();
             }
         }
 
         ViterbiNode cur = setMincostNode(ViterbiNode.makeBOSEOS(), nodesAry.get(len)).prev;
-
         ViterbiNode head = null;
         while(cur.prev != null) {
             final ViterbiNode tmp = cur.prev;
