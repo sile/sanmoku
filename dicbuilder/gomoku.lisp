@@ -1,7 +1,6 @@
 (in-package :gomoku)
 
-(package-alias :gomoku.trie :trie)
-(package-alias :gomoku.trie.double-array :double-array)
+(package-alias :dawg :trie)
 
 (defun build-matrix (matrix.def matrix.bin)
   (declare #.*fastest*)
@@ -36,7 +35,7 @@
        (when (and (> (length ,line) 0)
                   (case ,type
                         (:category (char/= #\0 (char ,line 0)))
-                        (:code     (char=  #\0 (char ,line 0)))))
+                        (:code (char= #\0 (char ,line 0)))))
          ,@body))))
 
 (defmacro each-char-category (vars char.def &body body)
@@ -46,14 +45,14 @@
          ,@body))))
 
 (defun parse-char-category (char.def &aux categorys)
-  (each-char-category (name) char.def 
+  (each-char-category (name) char.def
     (push (intern (symbol-name name) :keyword) categorys))
   (nreverse categorys))
   
 (defun build-char-category (char.def category.bin)
   (with-open-file (out category.bin :direction :output :if-exists :supersede :element-type 'octet)
     (write-int (length (parse-char-category char.def)) out :width 4)
-    (each-char-category (name invoke group length) char.def 
+    (each-char-category (name invoke group length) char.def
       (declare (ignore name))
       (write-int invoke out)
       (write-int group out)
@@ -78,7 +77,7 @@
                       (parse-integer range :start 10 :end 14 :radix 16)))
                (category (with-input-from-string (in category-spec)
                            (make-category (loop FOR c = (read in nil nil)
-                                                WHILE c 
+                                                WHILE c
                                                 COLLECT (intern (symbol-name c) :keyword))
                                           categorys))))
           (loop FOR code FROM beg TO end
@@ -92,14 +91,14 @@
         (write-int mask out :width 2)))))
 
 (defmacro each-morpheme ((surface pos-id cost) filepath &body body)
-  `(each-line (#0=#:line ,filepath) 
+  `(each-line (#0=#:line ,filepath)
      (let* ((#1=#:p1 (position #\, #0#))
             (#2=#:p2 (position #\, #0# :start (1+ #1#)))
             (#3=#:p3 (position #\, #0# :start (1+ #2#)))
             (#4=#:p4 (position #\, #0# :start (1+ #3#))))
        (let ((,surface (subseq #0# 0 #1#))
-             (,pos-id  (parse-integer #0# :start (1+ #1#) :end #2#))
-             (,cost    (parse-integer #0# :start (1+ #3#) :end #4#)))
+             (,pos-id (parse-integer #0# :start (1+ #1#) :end #2#))
+             (,cost (parse-integer #0# :start (1+ #3#) :end #4#)))
          ,@body))))
 
 (defun collect-unk-morp (unk.def)
@@ -110,11 +109,11 @@
         (push (list pos-id cost) (gethash morp-id morps))))
     morps))
 
-(defun collect-morp (morps outdir &aux (da (double-array:load-dic outdir)))
+(defun collect-morp (morps da)
   (let ((offset (length (parse-char-category #P"char.def"))))
     (dolist (csv (directory #P"*.csv"))
       (each-morpheme (surface pos-id cost) csv
-        (let ((morp-id (double-array:get-id surface da)))
+        (let ((morp-id (trie:get-id surface da)))
           (assert morp-id)
           (push (list pos-id cost) (gethash (+ offset morp-id) morps))))))
   morps)
@@ -131,15 +130,14 @@
 
 (defun build-morp (unk.def morp.bin)
   (let ((morps (collect-unk-morp unk.def)))
-    (collect-morp morps (directory-namestring morp.bin))
-
+    (collect-morp morps (trie:load (merge-pathnames #P"surface-id.bin" morp.bin)
+                                   :byte-order :big))
     (let ((ms (make-array (hash-table-count morps) :initial-element '())))
       (maphash (lambda (morp-id vs)
                  (setf (aref ms morp-id) (delete-unused-morp vs)))
                morps)
       (with-open-file (out morp.bin :direction :output :if-exists :supersede
                                     :element-type 'octet)
-        
         (write-int (loop FOR vs ACROSS ms SUM (length vs)) out :width 4)
         (loop FOR vs ACROSS ms
           DO
@@ -157,9 +155,24 @@
           (assert (< (length vs) #x80))
           (write-int (length vs) out))))))
 
+(defun unique (keys)
+  (loop FOR (prev cur) ON keys
+        WHILE cur
+        UNLESS (string= (the simple-string prev) (the simple-string cur))
+    COLLECT cur INTO list
+    FINALLY
+    (return (cons (first keys) list))))
+
+(defun collect-keyset (&aux keys)
+  (dolist (csv (directory #P"*.csv"))
+    (each-line (line csv)
+      (push (subseq line 0 (position #\, line))
+            keys)))
+  (unique (sort keys #'string<)))
+
 (defun build-dic (text-dic-dir output-dir)
   (format *error-output* "; = BUILD DICTIONARY =~%")
-  (format *error-output* "; source text dictionary:   ~A~%" text-dic-dir)
+  (format *error-output* "; source text dictionary: ~A~%" text-dic-dir)
   (format *error-output* "; output binary dictionary: ~A~%" output-dir)
 
   (ensure-directories-exist output-dir)
@@ -168,20 +181,20 @@
         (*default-pathname-defaults* (probe-file text-dic-dir)))
     (flet ((out-path (filename)
              (merge-pathnames filename output-dir)))
-      (with-time "matrix" 
-                 (build-matrix #P"matrix.def" (out-path #P"matrix.bin")))
-      (with-time "parts-of-speech" 
-                 (build-pos #P"left-id.def" (out-path #P"pos.bin")))
-      (with-time "char-category" 
-                 (build-char-category #P"char.def" (out-path #P"category.bin")))
+      (with-time "matrix"
+        (build-matrix #P"matrix.def" (out-path #P"matrix.bin")))
+      (with-time "parts-of-speech"
+        (build-pos #P"left-id.def" (out-path #P"pos.bin")))
+      (with-time "char-category"
+        (build-char-category #P"char.def" (out-path #P"category.bin")))
       (with-time "code-category"
-                 (build-code-category #P"char.def" (out-path #P"code.bin")))
+        (build-code-category #P"char.def" (out-path #P"code.bin")))
       (with-time "surface-id"
-                 (double-array:build *default-pathname-defaults* output-dir))
+        (trie:build :input (collect-keyset) :output (out-path #P"surface-id.bin")
+                    :byte-order :big))
       (with-time "morpheme"
         (build-morp #P"unk.def" (out-path "morpheme.bin")))))
   (format *error-output* ";~%; done~%")
   'done)
 
-(package-alias :gomoku.trie)
-(package-alias :gomoku.trie.double-array)
+(package-alias :dawg)

@@ -1,12 +1,9 @@
 (defpackage gomoku.util
   (:use :common-lisp)
   (:export write-int
-           read-int
            with-time
            package-alias
-           nlet
            each-line
-           a.if
            it
            defmain))
 
@@ -21,4 +18,3 @@
 (defvar *text-dictionary-charset* :euc-jp)
 
 (defvar *fastest* '(optimize (speed 3) (safety 0) (debug 0)))
-
