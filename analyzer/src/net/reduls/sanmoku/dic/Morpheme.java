@@ -8,9 +8,6 @@ public final class Morpheme {
     public static final byte[] morphemeInfos; 
 
     static {
-        long beg_t = java.lang.System.currentTimeMillis();
-        System.out.println("#START-3");
-
         {
             DataInputStream in = Misc.openDictionaryDataAsDIS("id-morphemes-map.bin");
             final int idMorphmesMapSize = Misc.readInt(in);
@@ -25,7 +22,6 @@ public final class Morpheme {
             } catch(Exception e) {}
             Misc.close(in);
         }
-
         {
             DataInputStream in = Misc.openDictionaryDataAsDIS("morpheme.bin");
             final int morphemeCount = Misc.readInt(in);
@@ -37,7 +33,6 @@ public final class Morpheme {
             
             Misc.close(in);
         }
-        System.out.println("#END-3: " + (java.lang.System.currentTimeMillis()-beg_t));
     }
 
     public static int morphemesBegin(int surfaceId) {

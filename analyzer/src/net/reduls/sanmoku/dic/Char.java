@@ -18,14 +18,14 @@ public final class Char {
         }
     }
     
-    private final static Category[] categorys;
-    private final static short[] compatibleMasks;
+    private final static Category[] charCategorys;
+    private final static byte[] charInfos;
 
     static {
         DataInputStream in = Misc.openDictionaryDataAsDIS("category.bin");
         
         final int charCategoryNum = Misc.readInt(in);
-        Category[] charCategorys = new Category[charCategoryNum];
+        charCategorys = new Category[charCategoryNum];
         for(int i=0; i < charCategoryNum; i++)
             charCategorys[i] = new Category(i,
                                             Misc.readByte(in)==1,
@@ -37,20 +37,24 @@ public final class Char {
         DataInputStream in2 = Misc.openDictionaryDataAsDIS("code.bin");
         
         final int codeLimit = Misc.readInt(in2);
-        categorys = new Category[codeLimit];
-        compatibleMasks = new short[codeLimit];
-        for(int i=0; i < codeLimit; i++) {
-            categorys[i] = charCategorys[Misc.readByte(in2)];
-            compatibleMasks[i] = Misc.readShort(in2);
-        }
+        charInfos = new byte[codeLimit*3]; 
+
+        try {
+            in2.readFully(charInfos, 0, charInfos.length);
+        } catch(Exception e) {}
+
         Misc.close(in2);
     }
 
-    public static final Category category(char ch) {
-        return categorys[ch];
+    public static final Category category(char c) {
+        return charCategorys[charInfos[(int)(c)*3]];
     }
 
     public static final boolean isCompatible(char c1, char c2) {
-        return (compatibleMasks[c1] & compatibleMasks[c2]) != 0;
+        return (compatibleMask(c1) & compatibleMask(c2)) != 0;
+    }
+
+    private static final short compatibleMask(char c) {
+        return (short)((charInfos[(int)(c)*3+1]<<8) | charInfos[(int)(c)*3+2]&0xFF);
     }
 }
