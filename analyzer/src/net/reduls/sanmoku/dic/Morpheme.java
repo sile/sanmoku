@@ -20,9 +20,9 @@ public final class Morpheme {
             final byte[] buf = new byte[idMorphmesMapSize];
             try {
                 in.readFully(buf, 0, buf.length);
-                idMorphmesMap[0] = buf[0];
+                idMorphmesMap[0] = 0;
                 for(int i=1; i < buf.length; i++) 
-                    idMorphmesMap[i] = buf[i] + idMorphmesMap[i-1];
+                    idMorphmesMap[i] = buf[i-1] + idMorphmesMap[i-1];
             } catch(Exception e) {}
             Misc.close(in);
         }
@@ -35,9 +35,9 @@ public final class Morpheme {
             final byte[] buf = new byte[morphemeCount*4];
             try {
                 in.readFully(buf, 0, buf.length);
-                for(int i=0; i < morphemes.length/2; i++) {
-                    morphemes[i*2] = (short)((buf[i*4]<<8) + (buf[i*4+1]&0xff));   // posId
-                    morphemes[i*2+1] = (short)((buf[i*4+2]<<8) + (buf[i*4+3]&0xff)); // cost
+                for(int i=0; i < morphemeCount; i++) {
+                    morphemes[i*2] =   (short)((buf[i*4+0]<<8) | (buf[i*4+1]&0xff)); // posId
+                    morphemes[i*2+1] = (short)((buf[i*4+2]<<8) | (buf[i*4+3]&0xff)); // cost
                 }
             } catch(Exception e) {}
             

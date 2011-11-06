@@ -15,11 +15,24 @@ public final class SurfaceId {
             
             final int nodeCount = Misc.readInt(in)/8;
             final int extCount = Misc.readInt(in)/4; // XXX: unused
-
+            
             nodes = new long[nodeCount];
-            for(int i=0; i < nodeCount; i++) {
-                nodes[i] = Misc.readLong(in);
-            }
+            final byte[] buf = new byte[nodeCount*8];
+            
+            try {
+                in.readFully(buf, 0, buf.length);
+                for(int i=0; i < nodeCount; i++) {
+                    nodes[i] = (((long)(buf[i*8+0] & 0xff) << 56) | 
+                                ((long)(buf[i*8+1] & 0xff) << 48) |
+                                ((long)(buf[i*8+2] & 0xff) << 40) | 
+                                ((long)(buf[i*8+3] & 0xff) << 32) | 
+                                ((long)(buf[i*8+4] & 0xff) << 24) |
+                                ((long)(buf[i*8+5] & 0xff) << 16) |
+                                ((long)(buf[i*8+6] & 0xff) <<  8) | 
+                                ((long)(buf[i*8+7] & 0xff)));
+                }
+            } catch(Exception e) {}
+
             Misc.close(in);
         }
         {
