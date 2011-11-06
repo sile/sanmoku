@@ -8,6 +8,8 @@ public final class SurfaceId {
     private static final long[] nodes;
     
     static {
+        long beg_t = java.lang.System.currentTimeMillis();
+        System.out.println("#START-2");
         {
             DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin");
             
@@ -25,6 +27,7 @@ public final class SurfaceId {
             idOffset = Misc.readInt(in);
             Misc.close(in);
         }
+        System.out.println("#END-2: " + (java.lang.System.currentTimeMillis()-beg_t));
     }
  
     public static void eachCommonPrefix(String text, int start, WordDic.Callback fn) {

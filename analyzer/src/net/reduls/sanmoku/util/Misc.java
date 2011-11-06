@@ -15,12 +15,12 @@ public final class Misc {
     }
 
     public static DataInputStream openDictionaryDataAsDIS(String filename) {
-        return new DataInputStream(new BufferedInputStream(openDictionaryData(filename)));
+        return new DataInputStream(new BufferedInputStream(openDictionaryData(filename), 80960));
     }
 
     public static BufferedReader openDictionaryDataAsBR(String filename) {
         try {
-            return new BufferedReader(new InputStreamReader(openDictionaryData(filename),"UTF-8"));
+            return new BufferedReader(new InputStreamReader(openDictionaryData(filename),"UTF-8"), 80960);
         } catch(IOException ex) {
             throw new AssertionError(ex.getMessage());
         }
