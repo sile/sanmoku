@@ -1,4 +1,4 @@
-package net.reduls.gomoku;
+package net.reduls.sanmoku;
 
 public final class Morpheme {
     public final String surface;

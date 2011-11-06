@@ -1,12 +1,12 @@
-package net.reduls.gomoku;
+package net.reduls.sanmoku;
 
 import java.util.List;
 import java.util.ArrayList;
-import net.reduls.gomoku.dic.ViterbiNode;
-import net.reduls.gomoku.dic.WordDic;
-import net.reduls.gomoku.dic.Unknown;
-import net.reduls.gomoku.dic.Matrix;
-import net.reduls.gomoku.dic.PartsOfSpeech;
+import net.reduls.sanmoku.dic.ViterbiNode;
+import net.reduls.sanmoku.dic.WordDic;
+import net.reduls.sanmoku.dic.Unknown;
+import net.reduls.sanmoku.dic.Matrix;
+import net.reduls.sanmoku.dic.PartsOfSpeech;
 
 public final class Tagger {
     private static final ArrayList<ViterbiNode> BOS_NODES = new ArrayList<ViterbiNode>(1);

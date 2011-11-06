@@ -1,9 +1,9 @@
-package net.reduls.gomoku.bin;
+package net.reduls.sanmoku.bin;
 
 import java.io.IOException;
-import net.reduls.gomoku.Tagger;
-import net.reduls.gomoku.Morpheme;
-import net.reduls.gomoku.util.ReadLine;
+import net.reduls.sanmoku.Tagger;
+import net.reduls.sanmoku.Morpheme;
+import net.reduls.sanmoku.util.ReadLine;
 
 public final class Gomoku {
     public static void main(String[] args) throws IOException {

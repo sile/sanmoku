@@ -1,4 +1,4 @@
-package net.reduls.gomoku.dic;
+package net.reduls.sanmoku.dic;
 
 public final class CodeStream {
     final private CharSequence src;

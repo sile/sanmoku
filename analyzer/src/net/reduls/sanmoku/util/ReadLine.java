@@ -1,4 +1,4 @@
-package net.reduls.gomoku.util;
+package net.reduls.sanmoku.util;
 
 import java.io.InputStream;
 import java.io.BufferedReader;

@@ -1,4 +1,4 @@
-package net.reduls.gomoku.dic;
+package net.reduls.sanmoku.dic;
 
 import java.util.List;
 

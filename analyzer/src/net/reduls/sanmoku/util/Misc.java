@@ -1,4 +1,4 @@
-package net.reduls.gomoku.util;
+package net.reduls.sanmoku.util;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,7 +11,7 @@ import java.io.IOException;
 
 public final class Misc {
     public static InputStream openDictionaryData(String filename) {
-        return Misc.class.getResourceAsStream("/net/reduls/gomoku/dicdata/"+filename);
+        return Misc.class.getResourceAsStream("/net/reduls/sanmoku/dicdata/"+filename);
     }
 
     public static DataInputStream openDictionaryDataAsDIS(String filename) {

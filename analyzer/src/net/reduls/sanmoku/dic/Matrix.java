@@ -1,7 +1,7 @@
-package net.reduls.gomoku.dic;
+package net.reduls.sanmoku.dic;
 
 import java.io.DataInputStream;
-import net.reduls.gomoku.util.Misc;
+import net.reduls.sanmoku.util.Misc;
 
 public final class Matrix {
     private final static short[][] matrix;
