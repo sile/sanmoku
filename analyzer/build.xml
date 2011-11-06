@@ -7,7 +7,7 @@
   <property name="javadoc.dir" value="docs"/>
 
   <target name="jar" depends="compile">
-    <jar jarfile="sanmoku-${version}.jar" basedir="${classes.dir}" compress="true">
+    <jar jarfile="sanmoku-${version}.jar" basedir="${classes.dir}">
       <metainf dir=".">
 	<include name="COPYING" />
       </metainf>

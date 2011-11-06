@@ -4,7 +4,8 @@ import java.io.DataInputStream;
 import net.reduls.sanmoku.util.Misc;
 
 public final class Matrix {
-    private final static short[][] matrix;
+    private final static byte[] matrix;
+    private final static int leftNum;
     
     static {
         {
@@ -12,17 +13,11 @@ public final class Matrix {
             System.out.println("#START-1");
 
             DataInputStream in = Misc.openDictionaryDataAsDIS("matrix.bin");
-            final int leftNum = Misc.readInt(in);
+            leftNum = Misc.readInt(in);
             final int rightNum = Misc.readInt(in);
-            final byte[] buf = new byte[leftNum*rightNum*2];
-            matrix = new short[leftNum][rightNum];
+            matrix = new byte[leftNum*rightNum*2];
             try {
-                in.readFully(buf, 0, buf.length);
-                for(int l=0; l < leftNum; l++) 
-                    for(int r=0; r < rightNum; r++) {
-                        final int i = (l*leftNum + r)*2;
-                        matrix[r][l] = (short)((buf[i]<<8) | (buf[i+1]&0xff));
-                    }
+                in.readFully(matrix, 0, matrix.length);
             } catch(Exception e) {}
             Misc.close(in);
 
@@ -31,6 +26,7 @@ public final class Matrix {
     }
 
     public static short linkCost(short leftId, short rightId) {
-        return matrix[rightId][leftId];
+        final int i = (leftId*leftNum + rightId)*2;
+        return (short)((matrix[i]<<8) | (matrix[i+1]&0xff));
     }
 }

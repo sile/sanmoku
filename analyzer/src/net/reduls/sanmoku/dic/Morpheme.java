@@ -4,9 +4,8 @@ import java.io.DataInputStream;
 import net.reduls.sanmoku.util.Misc;
 
 public final class Morpheme {
-
     public static final int[] idMorphmesMap;
-    public static final short[] morphemes;
+    public static final byte[] morphemeInfos; 
 
     static {
         long beg_t = java.lang.System.currentTimeMillis();
@@ -30,15 +29,10 @@ public final class Morpheme {
         {
             DataInputStream in = Misc.openDictionaryDataAsDIS("morpheme.bin");
             final int morphemeCount = Misc.readInt(in);
-            morphemes = new short[morphemeCount*2];
-
-            final byte[] buf = new byte[morphemeCount*4];
+            
+            morphemeInfos = new byte[morphemeCount*4];
             try {
-                in.readFully(buf, 0, buf.length);
-                for(int i=0; i < morphemeCount; i++) {
-                    morphemes[i*2] =   (short)((buf[i*4+0]<<8) | (buf[i*4+1]&0xff)); // posId
-                    morphemes[i*2+1] = (short)((buf[i*4+2]<<8) | (buf[i*4+3]&0xff)); // cost
-                }
+                in.readFully(morphemeInfos, 0, morphemeInfos.length);
             } catch(Exception e) {}
             
             Misc.close(in);
@@ -52,5 +46,13 @@ public final class Morpheme {
 
     public static int morphemesEnd(int surfaceId) {
         return idMorphmesMap[surfaceId+1];
+    }
+
+    public static short posId(int morphemeId) {
+        return (short)((morphemeInfos[morphemeId*4+0]<<8) | (morphemeInfos[morphemeId*4+1]&0xff));
+    }
+
+    public static short cost(int morphemeId) {
+        return (short)((morphemeInfos[morphemeId*4+2]<<8) | (morphemeInfos[morphemeId*4+3]&0xff));
     }
 }
