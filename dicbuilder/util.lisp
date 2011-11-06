@@ -1,4 +1,4 @@
-(in-package :gomoku.util)
+(in-package :sanmoku.util)
 
 (declaim (inline write-int))
 
@@ -23,7 +23,7 @@
        (force-output *error-output*))))
      
 (defmacro each-line ((line filepath) &body body)
-  `(with-open-file (#1=#:in ,filepath :external-format gomoku:*text-dictionary-charset*)
+  `(with-open-file (#1=#:in ,filepath :external-format sanmoku:*text-dictionary-charset*)
      (loop FOR ,line OF-TYPE (or null simple-string) = (read-line #1# nil nil)
            WHILE ,line
        DO

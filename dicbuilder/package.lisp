@@ -1,4 +1,4 @@
-(defpackage gomoku.util
+(defpackage sanmoku.util
   (:use :common-lisp)
   (:export write-int
            with-time
@@ -7,12 +7,12 @@
            it
            defmain))
 
-(defpackage gomoku
-  (:use :common-lisp :gomoku.util)
+(defpackage sanmoku
+  (:use :common-lisp :sanmoku.util)
   (:export build-dic
            *text-dictionary-charset*
            done))
-(in-package :gomoku)
+(in-package :sanmoku)
 
 (deftype octet () '(unsigned-byte 8))
 (defvar *text-dictionary-charset* :euc-jp)

@@ -5,10 +5,10 @@ import net.reduls.sanmoku.Tagger;
 import net.reduls.sanmoku.Morpheme;
 import net.reduls.sanmoku.util.ReadLine;
 
-public final class Gomoku {
+public final class Sanmoku {
     public static void main(String[] args) throws IOException {
         if(!(args.length==0 || (args.length==1 && args[0].equals("-wakati")))) {
-	    System.err.println("Usage: java net.reduls.igo.bin.Gomoku [-wakati]");
+	    System.err.println("Usage: java net.reduls.igo.bin.Sanmoku [-wakati]");
 	    System.exit(1);
 	}
 

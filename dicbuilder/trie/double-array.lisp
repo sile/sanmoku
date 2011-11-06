@@ -1,14 +1,14 @@
-(defpackage gomoku.trie.double-array
-  (:use :common-lisp :gomoku.util)
+(defpackage sanmoku.trie.double-array
+  (:use :common-lisp :sanmoku.util)
   (:export build
            load-dic
            get-id))
-(in-package :gomoku.trie.double-array)
+(in-package :sanmoku.trie.double-array)
 
 (package-alias :pairing-heap :heap)
-(package-alias :gomoku.trie :trie)
-(package-alias :gomoku.trie.code-stream :code-stream)
-(package-alias :gomoku.trie.node-allocator :node-allocator)
+(package-alias :sanmoku.trie :trie)
+(package-alias :sanmoku.trie.code-stream :code-stream)
+(package-alias :sanmoku.trie.node-allocator :node-allocator)
 
 (deftype uint1 () '(unsigned-byte 8))
 (deftype uint2 () '(unsigned-byte 16))
@@ -25,7 +25,7 @@
   (length (da-base da)))
 
 (defun node-count-limit (trie &aux (set (make-hash-table :test #'eq)))
-  (declare #.gomoku::*fastest*)
+  (declare #.sanmoku::*fastest*)
   (nlet recur ((node trie))
         (unless (gethash node set)
           (setf (gethash node set) t)
@@ -50,7 +50,7 @@
   (setf (aref (da-base da) node-idx) base-idx))
 
 (defun build-impl (trie alloca da code-map)
-  (declare #.gomoku::*fastest*
+  (declare #.sanmoku::*fastest*
            ((simple-array uint2) code-map))
   (let ((memo (make-hash-table :test #'eq))
         (cur-code 0)
@@ -182,6 +182,6 @@
               (recur next (inc-id id nodes node)))))))))
 
 (package-alias :pairing-heap)
-(package-alias :gomoku.trie)
-(package-alias :gomoku.trie.code-stream)
-(package-alias :gomoku.trie.node-allocator)
+(package-alias :sanmoku.trie)
+(package-alias :sanmoku.trie.code-stream)
+(package-alias :sanmoku.trie.node-allocator)

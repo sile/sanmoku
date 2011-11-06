@@ -1,8 +1,8 @@
 (in-package :asdf)
 
-(defsystem gomoku
-  :name "gomoku"
-  :version "0.0.5"
+(defsystem sanmoku
+  :name "sanmku"
+  :version "0.0.1"
   :author "Takeru Ohta"
   :description ""
   :depends-on (:dawg)
@@ -10,4 +10,4 @@
   
   :components ((:file "package")
                (:file "util")
-               (:file "gomoku")))
+               (:file "sanmoku")))

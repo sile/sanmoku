@@ -1,13 +1,13 @@
-(defpackage gomoku.trie
-  (:use :common-lisp :gomoku.util)
+(defpackage sanmoku.trie
+  (:use :common-lisp :sanmoku.util)
   (:export build
            node-options
            collect-children))
-(in-package :gomoku.trie)
+(in-package :sanmoku.trie)
 
-(package-alias :gomoku.trie.code-stream :stream)
+(package-alias :sanmoku.trie.code-stream :stream)
 
-(declaim #.gomoku::*fastest*)
+(declaim #.sanmoku::*fastest*)
 (deftype positive-fixnum () '(integer 0 #.most-positive-fixnum))
 
 ;;;;;;;;;;;;;;;;;;;;
@@ -141,4 +141,4 @@
     FINALLY
     (return acc)))
 
-(package-alias :gomoku.trie.code-stream)
+(package-alias :sanmoku.trie.code-stream)

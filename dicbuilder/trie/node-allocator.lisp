@@ -1,8 +1,8 @@
-(defpackage gomoku.trie.node-allocator
+(defpackage sanmoku.trie.node-allocator
   (:use :common-lisp)
   (:export make
            allocate))
-(in-package :gomoku.trie.node-allocator)
+(in-package :sanmoku.trie.node-allocator)
 
 (declaim (inline can-allocate? allocate-impl))
 
@@ -27,7 +27,7 @@
                    :base-used? base-used?))))
 
 (defun allocate-impl (alloca idx)
-  (declare #.gomoku::*fastest*)
+  (declare #.sanmoku::*fastest*)
   (with-slots (nexts prevs) (the alloca alloca)
     (assert (and (/= -1 (aref nexts idx))
                  (/= -1 (aref prevs idx))))
@@ -37,7 +37,7 @@
           (aref prevs idx) -1)))
 
 (defun can-allocate? (alloca base codes)
-  (declare #.gomoku::*fastest*)
+  (declare #.sanmoku::*fastest*)
   (with-slots (nexts) (the alloca alloca)
     (every (lambda (cd) 
              (declare (fixnum base cd))
@@ -45,7 +45,7 @@
            (the list codes))))
 
 (defun allocate (alloca codes)
-  (declare #.gomoku::*fastest*)
+  (declare #.sanmoku::*fastest*)
   (with-slots (nexts base-used?) (the alloca alloca)
     (loop WITH first = (the fixnum (first codes))
           FOR cur = (the fixnum (aref nexts 0)) THEN (aref nexts cur)

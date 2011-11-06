@@ -1,4 +1,4 @@
-(in-package :gomoku)
+(in-package :sanmoku)
 
 (package-alias :dawg :trie)
 
