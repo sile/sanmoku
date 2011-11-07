@@ -19,7 +19,7 @@
     <javac debug="off" encoding="UTF-8" srcdir="${src.dir}" destdir="${classes.dir}" />
     <copy todir="${classes.dir}/net/reduls/sanmoku/dicdata">
       <fileset dir="${src.dir}/net/reduls/sanmoku/dicdata">
-        <include name="*.bin" />
+        <include name="*.bin*" />
       </fileset>
     </copy>
     <copy todir="${classes.dir}">

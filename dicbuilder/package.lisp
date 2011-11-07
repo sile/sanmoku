@@ -18,3 +18,4 @@
 (defvar *text-dictionary-charset* :euc-jp)
 
 (defvar *fastest* '(optimize (speed 3) (safety 0) (debug 0)))
+

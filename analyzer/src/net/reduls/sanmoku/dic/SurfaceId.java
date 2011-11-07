@@ -6,22 +6,37 @@ import net.reduls.sanmoku.util.Misc;
 public final class SurfaceId {
     private static final int idOffset;
     private static final byte[] nodes;
+    private static final byte[] exts;
+    private static final byte[] char_to_chck;
     
     static {
         {
-            DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin");
-            
-            final int nodeCount = Misc.readInt(in)/8;
-            final int extCount = Misc.readInt(in)/4; // XXX: unused
-            
-            nodes = new byte[nodeCount*8];
-            
+            DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin.node");
+            final int nodeByteCount = Misc.readInt(in);
+            nodes = new byte[nodeByteCount];
             try {
                 in.readFully(nodes, 0, nodes.length);
             } catch(Exception e) {}
-
             Misc.close(in);
         }
+        {
+            DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin.ext");
+            final int extByteCount = Misc.readInt(in); 
+            exts = new byte[extByteCount];
+            try {
+                in.readFully(exts, 0, exts.length);
+            } catch(Exception e) {}
+            Misc.close(in);
+        }
+        {
+            DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin.char");
+            char_to_chck = new byte[0x100];
+            try {
+                in.readFully(char_to_chck, 0, char_to_chck.length);
+            } catch(Exception e) {}
+            Misc.close(in);
+        }
+
         {
             DataInputStream in = Misc.openDictionaryDataAsDIS("category.bin");
             idOffset = Misc.readInt(in);
@@ -38,13 +53,13 @@ public final class SurfaceId {
             if(isTerminal(node))
                 WordDic.eachViterbiNode(fn, id++, start, in.position()-start, false);
             
-            if(in.isEos())
+            if(in.isEos()) 
                 return;
             
-            if(checkEncodedChildren(in, node)==false)
+            if(checkEncodedChildren(in, node)==false) 
                 return;
             
-            final char arc = in.read();
+            final char arc = read(in);
             final long next = getNode(base(node)+arc);
             if(chck(next) != arc)
                 return;
@@ -53,57 +68,68 @@ public final class SurfaceId {
         }
     }
 
+    private static char read(CodeStream in) {
+        return (char)(char_to_chck[in.read()]&0xFF);
+    }
+
     private static boolean checkEncodedChildren(CodeStream in, long node) {
         switch(type(node)) {
         case 0:
-            return checkEC(in,node,0) && checkEC(in,node,1);
-        case 1:
-            return checkEC(in,node,0);
+            return checkEC(in,node);
         default:
             return true;
         }
     }
-    private static boolean checkEC(CodeStream in, long node, int n) {
-        char chck = (char)((node>>(40+8*n)) & 0xFF);
-        return chck==0 || (in.read() == chck &&
+    private static boolean checkEC(CodeStream in, long node) {
+        char chck = (char)((node>>27) & 0x7F);
+        return chck==0 || (read(in) == chck &&
                            in.isEos() == false);
     }
 
     private static char chck(long node) {
-        return (char)((node>>32) & 0xFF);
+        return (char)((node>>20) & 0x7F);
     }
     
     private static int base(long node) {
-        return (int)(node & 0x1FFFFFFF);
+        return (int)(node & 0x7FFFF);
     }
 
     private static boolean isTerminal(long node) {
-        return ((node>>31) & 1)==1;
+        return ((node>>19) & 1)==1;
     }
 
     private static int type(long node) {
-        return (int)((node>>29) & 3);
+        if (((node>>39) & 1)==1) {
+            return 2+(int)((node>>38) & 1);
+        } else {
+            return 0;
+        }
     }
 
     private static int siblingTotal(long node) {
         switch (type(node)) {
         case 0:
-            return (int)((node>>56) & 0xFF);
-        case 1:
-            return (int)((node>>48) & 0xFFFF);
+            return (int)((node>>34) & 0x1F);
+        case 2:
+            return (int)((node>>27) & 0x7FF);
         default:
-            return (int)((node>>40) & 0xFFFFFF);
+            {
+                // TODO: big endian
+                int i = (int)((node>>27) & 0x7FF);
+                return 
+                    (int)((exts[i*4+0]&0xFF)<<24) |
+                    (int)((exts[i*4+1]&0xFF)<<16) |
+                    (int)((exts[i*4+2]&0xFF)<<8) |
+                    (int)((exts[i*4+3]&0xFF)<<0);
+            }
         }
     }
 
     private static long getNode(int i) {
-        return (((long)(nodes[i*8+0] & 0xff) << 56) | 
-                ((long)(nodes[i*8+1] & 0xff) << 48) |
-                ((long)(nodes[i*8+2] & 0xff) << 40) | 
-                ((long)(nodes[i*8+3] & 0xff) << 32) | 
-                ((long)(nodes[i*8+4] & 0xff) << 24) |
-                ((long)(nodes[i*8+5] & 0xff) << 16) |
-                ((long)(nodes[i*8+6] & 0xff) <<  8) | 
-                ((long)(nodes[i*8+7] & 0xff)));
+        return (((long)(nodes[i*5+0] & 0xff) << 32) | 
+                ((long)(nodes[i*5+1] & 0xff) << 24) |
+                ((long)(nodes[i*5+2] & 0xff) << 16) |
+                ((long)(nodes[i*5+3] & 0xff) <<  8) | 
+                ((long)(nodes[i*5+4] & 0xff)));
     }
 }
