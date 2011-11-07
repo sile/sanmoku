@@ -114,7 +114,6 @@ public final class SurfaceId {
             return (int)((node>>27) & 0x7FF);
         default:
             {
-                // TODO: big endian
                 int i = (int)((node>>27) & 0x7FF);
                 return 
                     (int)((exts[i*4+0]&0xFF)<<24) |
