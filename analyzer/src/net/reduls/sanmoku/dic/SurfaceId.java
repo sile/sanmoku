@@ -10,33 +10,9 @@ public final class SurfaceId {
     private static final byte[] char_to_chck;
     
     static {
-        {
-            DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin.node");
-            final int nodeByteCount = Misc.readInt(in);
-            nodes = new byte[nodeByteCount];
-            try {
-                in.readFully(nodes, 0, nodes.length);
-            } catch(Exception e) {}
-            Misc.close(in);
-        }
-        {
-            DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin.ext");
-            final int extByteCount = Misc.readInt(in); 
-            exts = new byte[extByteCount];
-            try {
-                in.readFully(exts, 0, exts.length);
-            } catch(Exception e) {}
-            Misc.close(in);
-        }
-        {
-            DataInputStream in = Misc.openDictionaryDataAsDIS("surface-id.bin.char");
-            char_to_chck = new byte[0x100];
-            try {
-                in.readFully(char_to_chck, 0, char_to_chck.length);
-            } catch(Exception e) {}
-            Misc.close(in);
-        }
-
+        nodes = Misc.readBytesFromFile("surface-id.bin.node", 1);
+        exts = Misc.readBytesFromFile("surface-id.bin.ext", 1);
+        char_to_chck = Misc.readBytesFromFile("surface-id.bin.ext", 0x100, 1);
         {
             DataInputStream in = Misc.openDictionaryDataAsDIS("category.bin");
             idOffset = Misc.readInt(in);

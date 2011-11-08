@@ -93,4 +93,15 @@ public final class Misc {
         }
         return buf;
     }
+
+    public static byte[] readBytesFromFile(String filename, int count, int unit) {
+        DataInputStream in = Misc.openDictionaryDataAsDIS(filename);
+        final byte[] buf = new byte[count*unit];
+        try {
+            in.readFully(buf, 0, buf.length);
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+        return buf;
+    }
 }

@@ -9,15 +9,8 @@ public final class Matrix {
     private final static byte[] posid_map;
     
     static {
-        {
-            DataInputStream in = Misc.openDictionaryDataAsDIS("posid-map.bin");
-            posid_map = new byte[Misc.readInt(in)*2];
-            try {
-                in.readFully(posid_map, 0, posid_map.length);
-            } catch(Exception e) {}
-            Misc.close(in);
-        }
-
+        posid_map = Misc.readBytesFromFile("posid-map.bin", 2);
+        
         {
             DataInputStream in = Misc.openDictionaryDataAsDIS("matrix.bin");
             leftNum = Misc.readInt(in);
@@ -25,8 +18,10 @@ public final class Matrix {
             matrix = new byte[leftNum*rightNum*2];
             try {
                 in.readFully(matrix, 0, matrix.length);
-            } catch(Exception e) {}
-            Misc.close(in);            
+            } catch(Exception e) {
+                throw new RuntimeException(e);
+            }
+            Misc.close(in); 
         }
     }
     
