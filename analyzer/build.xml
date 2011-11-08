@@ -20,6 +20,7 @@
     <copy todir="${classes.dir}/net/reduls/sanmoku/dicdata">
       <fileset dir="${src.dir}/net/reduls/sanmoku/dicdata">
         <include name="*.bin*" />
+        <include name="*.map" />
       </fileset>
     </copy>
     <copy todir="${classes.dir}">

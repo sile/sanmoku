@@ -14,11 +14,9 @@ public final class WordDic {
 
     public static void eachViterbiNode(Callback fn, int surfaceId, 
                                        int start, int length, boolean isSpace) {
-        final int i_start = Morpheme.morphemesBegin(surfaceId);
-        final int i_end = Morpheme.morphemesEnd(surfaceId);
-        for(int i=i_start; i < i_end; i++)
+        for(Morpheme.Entry e : Morpheme.getMorphemes(surfaceId))
             fn.call(new ViterbiNode(start, (short)length,
-                                    Morpheme.cost(i), Morpheme.posId(i),
+                                    e.cost, e.posId,
                                     isSpace));
     }
 }

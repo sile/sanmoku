@@ -81,4 +81,16 @@ public final class Misc {
             throw new AssertionError(ex.getMessage());
         }
     }
+
+    public static byte[] readBytesFromFile(String filename, int unit) {
+        DataInputStream in = Misc.openDictionaryDataAsDIS(filename);
+        final int count = Misc.readInt(in);
+        final byte[] buf = new byte[count*unit];
+        try {
+            in.readFully(buf, 0, buf.length);
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+        return buf;
+    }
 }
