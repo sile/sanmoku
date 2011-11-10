@@ -12,7 +12,7 @@ public final class SurfaceId {
     static {
         nodes = Misc.readBytesFromFile("surface-id.bin.node", 1);
         exts = Misc.readBytesFromFile("surface-id.bin.ext", 1);
-        char_to_chck = Misc.readBytesFromFile("surface-id.bin.ext", 0x100, 1);
+        char_to_chck = Misc.readBytesFromFile("surface-id.bin.char", 0x100, 1);
         {
             DataInputStream in = Misc.openDictionaryDataAsDIS("category.bin");
             idOffset = Misc.readInt(in);

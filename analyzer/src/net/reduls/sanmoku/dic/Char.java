@@ -33,17 +33,7 @@ public final class Char {
                                             Misc.readByte(in));
         Misc.close(in);
         
-        
-        DataInputStream in2 = Misc.openDictionaryDataAsDIS("code.bin");
-        
-        final int codeLimit = Misc.readInt(in2);
-        charInfos = new byte[codeLimit*3]; 
-
-        try {
-            in2.readFully(charInfos, 0, charInfos.length);
-        } catch(Exception e) {}
-
-        Misc.close(in2);
+        charInfos = Misc.readBytesFromFile("code.bin", 3);
     }
 
     public static final Category category(char c) {

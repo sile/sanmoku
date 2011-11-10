@@ -40,7 +40,8 @@
             (loop REPEAT right-num
                   COLLECT (read-int in 2))))))
 
-(defparameter *m* (load-matrix "dic/matrix.bin"))
+(defparameter *m* (load-matrix "/home/ohta/dev/java/sanmoku/dicbuilder/dic/matrix.bin"))
+
 
 (defun calc (as bs)
   (sqrt (/ (loop FOR a IN as
@@ -56,20 +57,25 @@
 (defun merge1 (border)
   (loop FOR a IN *m*
         FOR i FROM 0
-        WHEN (= i (gethash i *r*))
+        WHEN (and (/= i 0)
+                  (<= border (/ 10 (gethash i *pc*)))
+                  (= i (gethash i *r*)))
     DO
-    (format t "~&; ~a~%" i)
+    (when (zerop (mod i 10))
+      (format t "~&; ~a~%" i))
     (loop FOR b IN *m*
           FOR j FROM 0
-          WHEN (and (not (eq a b))
+          WHEN (and (/= j 0)
+                    (not (eq a b))
                     (= j (gethash j *r*)))
           WHEN (<= (calc a b) border)
       DO
       (setf (gethash i *r*) j)))
   'done)
 
-(loop FOR i FROM 0 BELOW 6
+(loop FOR i FROM 0 BELOW 10
       DO
+      (format t "~2&;; ~a~%" i)
       (merge1 i))
 
 (defun get-r (i)
@@ -78,7 +84,7 @@
         v
       (get-r v))))
 
-(with-open-file (out "dic/posid-map.bin" 
+(with-open-file (out "/tmp/posid-map.bin" 
                      :direction :output
                      :element-type '(unsigned-byte 8)
                      :if-exists :supersede)
@@ -89,7 +95,7 @@
   'done)
 
 
-(with-open-file (out "dic/matrix.bin"
+(with-open-file (out "/tmp/matrix.bin"
                      :direction :output
                      :element-type '(unsigned-byte 8)
                      :if-exists :supersede)
@@ -118,6 +124,4 @@
       DO
       (setf (gethash i *f*) (gethash (get-r i) *f*)))
 
-(loop FOR m IN *m*
-      COLLECT (calc (nth 800 *m*) m))
       
