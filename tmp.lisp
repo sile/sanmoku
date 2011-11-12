@@ -258,7 +258,7 @@
     FINALLY
     (return (reverse acc))))
 
-(defun fnfn (morps &aux acc (que (fifo:make morps)))
+(defun fnfn (morps &aux acc (que (fifo:make (copy-seq morps))))
   (loop WHILE (not (fifo:empty-p que))
         FOR x = (fifo:pop que)
         FOR i FROM 0

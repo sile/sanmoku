@@ -5,96 +5,74 @@ import java.io.DataInputStream;
 import net.reduls.sanmoku.util.Misc;
 
 public final class Morpheme {
-    private static final byte[] posidMap;
-    private static final byte[] costMap;
     private static final byte[] morps;
-    private static final byte[] morpExts;
+    private static final byte[] morpMap;
+    private static final byte[] leafs;
+    private static final byte[] leafAccCounts;
 
     static {
-        posidMap = Misc.readBytesFromFile("morp.posid.map", 2);
-        costMap = Misc.readBytesFromFile("morp.cost.map", 2);
-        morps = Misc.readBytesFromFile("morp.root.bin", 3);
-        morpExts = Misc.readBytesFromFile("morp.ext.bin", 4);
-    }
-    
-    public static int morphemeNode(int surfaceId) {
-        final int i = surfaceId;
-        return 
-            (int)((morps[i*3+0]&0xFF)<<16) |
-            (int)((morps[i*3+1]&0xFF)<<8) |
-            (int)((morps[i*3+2]&0xFF)<<0);
+        morps = Misc.readBytesFromFile("morp.info.bin", 2);
+        morpMap = Misc.readBytesFromFile("morp.info.map", 4);
+        leafs = Misc.readBytesFromFile("morp.leaf.bin", 8);
+        leafAccCounts = Misc.readBytesFromFile("morp.leaf.cnt.bin", 2);
     }
 
-    public static int morphemeCount(int node) {
-        if((node >> 23)==1)
-            return 1;
-        else
-            return (node >> 18);
-    }
-
-    public static short rootPosId(int node) {
-        final int i = (node>>14) & 0x1FF;
-        return (short)((posidMap[i*2]<<8) | (posidMap[i*2+1]&0xFF));
-    }
-
-    public static short rootCost(int node) {
-        final int i = node & 0x3FFF;
-        return (short)((costMap[i*2]<<8) | (costMap[i*2+1]&0xFF));
-    }
-
-    public static Iterable<Entry> getMorphemes(int surfaceId) {
-        final int node = morphemeNode(surfaceId);
-        final int count = morphemeCount(node);
-
+    public static Iterable<Entry> getMorphemes(final int surfaceId) {
         return new Iterable<Entry> () {
             public Iterator<Entry> iterator() {
-                return count==1 ? new SingleIterator(node) : new MultiIterator(node,count);
+                return new MorphemeIterator(surfaceId);
             }
         };
     }
 
-    static class SingleIterator implements Iterator<Entry> {
-        private final int node;
-        private int count = 1;
+    private static final int nextNode(int index) {
+        final long leaf = getLeaf(index);
+        if(hasNext(leaf, index)==false)
+            return -1;
 
-        public SingleIterator(int node) {
+        return nextNode(leaf, index);
+    }
+
+    private static final boolean hasNext(long leaf, int i) {
+        final long mask = ((long)1 << (i%64));
+        return (leaf & mask)!=0;
+    }
+    
+    private static final int nextNode(long leaf, int i) {
+        final int i2 = i/64;
+        final int offset = ((int)((leafAccCounts[i2*2+0]&0xFF)<<8) | 
+                            (int)((leafAccCounts[i2*2+1]&0xFF)));
+        final long mask = ((long)1 << (i%64))-1;
+        return 325882 + offset + Long.bitCount(leaf&mask);
+    }
+    
+    private static final long getLeaf(int i2) { 
+        final int i = i2/64;
+        return (((long)(leafs[i*8+0]) << 56) | 
+                ((long)(leafs[i*8+1] & 0xff) << 48) | 
+                ((long)(leafs[i*8+2] & 0xff) << 40) | 
+                ((long)(leafs[i*8+3] & 0xff) << 32) | 
+                ((long)(leafs[i*8+4] & 0xff) << 24) |
+                ((long)(leafs[i*8+5] & 0xff) << 16) |
+                ((long)(leafs[i*8+6] & 0xff) <<  8) | 
+                ((long)(leafs[i*8+7] & 0xff)));
+    }
+
+    static class MorphemeIterator implements Iterator<Entry> {
+        private int node;
+
+        public MorphemeIterator(int node) {
             this.node = node;
         }
         
         public boolean hasNext() {
-            return count > 0;
+            return node != -1;
         }
         
         public Entry next() {
-            count--;
-            return new Entry(rootPosId(node), rootCost(node));
-        }
-        
-        public void remove() {
-            throw new UnsupportedOperationException();  
-        }
-    }
-
-    static class MultiIterator implements Iterator<Entry> {
-        private int position;
-        private int count;
-
-        public MultiIterator(int node, int count) {
-            this.position = node & 0x3FFFF;
-            this.count = count;
-        }
-        
-        public boolean hasNext() {
-            return count > 0;
-        }
-        
-        public Entry next() {
-            final int i = position*4;
-            final short posId = (short)((morpExts[i+0]<<8) | (morpExts[i+1]&0xFF));
-            final short cost = (short)((morpExts[i+2]<<8) | (morpExts[i+3]&0xFF));
-            count--;
-            position++;
-            return new Entry(posId, cost);
+            final Entry e = new Entry(node);
+            node = nextNode(node);
+            return e;
         }
         
         public void remove() {
@@ -106,9 +84,10 @@ public final class Morpheme {
         public final short posId;
         public final short cost;
         
-        private Entry(short posId, short cost) {
-            this.posId = posId;
-            this.cost = cost;
+        private Entry(int i) {
+            final int m = (int)((morps[i*2+0]&0xFF)<<8) | (int)(morps[i*2+1]&0xFF);
+            posId = (short)((short)(morpMap[m*4+0]<<8) | (short)(morpMap[m*4+1]&0xFF));
+            cost = (short)((short)(morpMap[m*4+2]<<8) | (short)(morpMap[m*4+3]&0xFF));
         }
     }
 }
