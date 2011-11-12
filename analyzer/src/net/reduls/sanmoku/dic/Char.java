@@ -53,15 +53,13 @@ public final class Char {
         int end = charInfos.length/6;
 
         for(;;) {
-            int mid = beg+(end-beg)/2;
-            //                        System.out.println("# "+beg+" < "+mid+" < "+end+": "+(int)c+"="+nodeCode(mid));
-            if(end-beg == 1) {
+            final int mid = beg+(end-beg)/2;
+            if(end-beg == 1) 
                 return nodeValue(beg);
-            } else if(c < nodeCode(mid)) {
+            else if(c < nodeCode(mid))
                 end = mid;
-            } else if(c >= nodeCode(mid)) {
+            else if(c >= nodeCode(mid))
                 beg = mid;
-            }
         }
     }
     

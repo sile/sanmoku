@@ -177,6 +177,10 @@
         int
       (- int b1))))
 
+(defun read-uint (in n)
+   (loop FOR i FROM (1- n) DOWNTO 0
+         SUM (ash (read-byte in) (* i 8))))
+
 (defparameter *m*
   (with-open-file (in "/home/ohta/dev/java/sanmoku/dicbuilder/dic/matrix.bin"
                       :element-type '(unsigned-byte 8))
@@ -185,6 +189,8 @@
       (loop REPEAT (* lefts rights)
             COLLECT (read-int in 2)))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; for merpheme.bin
 (defparameter *pc* 
   (let ((m (make-hash-table)))
     (dolist (p *p* m)
@@ -194,6 +200,133 @@
   (let ((m (make-hash-table)))
     (dolist (p *c* m)
       (incf (gethash p m 0)))))
+
+(defparameter *pcc*
+  (loop WITH m = (make-hash-table :test #'equal)
+        FOR p IN *p*
+        FOR c IN *c*
+        DO
+        (incf (gethash (cons p c) m 0))
+        FINALLY
+        (return m)))
+
+(defparameter *pc-map*
+  (loop WITH m = (make-hash-table :test #'equal)
+        FOR p IN *p*
+        FOR c IN *c*
+        UNLESS (gethash (cons p c) m)
+        DO
+        (setf (gethash (cons p c) m) (hash-table-count m))
+        FINALLY
+        (return m)))
+
+(with-open-file (out "/home/ohta/dev/java/sanmoku/dicbuilder/dic/morp.info.bin"
+                     :element-type '(unsigned-byte 8)
+                     :if-exists :supersede
+                     :direction :output)
+  (write-uint (length *p*) 4 out)
+  (loop FOR p IN *p*
+        FOR c IN *c*
+        DO
+        (write-uint (gethash (cons p c) *pc-map*) 2 out)))
+
+(with-open-file (out "/home/ohta/dev/java/sanmoku/dicbuilder/dic/morp.info.map"
+                     :element-type '(unsigned-byte 8)
+                     :if-exists :supersede
+                     :direction :output)
+  (write-uint (hash-table-count *pc-map*) 4 out)
+  (loop FOR ((p . c) n) IN (sort (maphash-to-list #'list *pc-map*) #'< :key #'second)
+        DO
+        (write-uint p 2 out)
+        (write-uint c 2 out)))
+  
+(defparameter *id-morps-map*
+  (with-open-file (in "/home/ohta/dev/java/sanmoku/dicbuilder/dic/id-morphemes-map.bin"
+                      :element-type '(unsigned-byte 8))
+    (let ((count (read-int in 4)))
+      (loop FOR i FROM 0 BELOW count
+            COLLECT (read-uint in 1)))))
+
+(defparameter *morps*
+  (loop WITH acc = '()
+        WITH pca = (map 'vector (lambda (p c) (gethash (cons p c) *pc-map*)) *p* *c*)
+        WITH offset = 0
+        FOR im IN *id-morps-map*
+    DO
+    (push (coerce (subseq pca offset (+ offset im)) 'list) acc)
+    (incf offset im)
+    FINALLY
+    (return (reverse acc))))
+
+(defun fnfn (morps &aux acc (que (fifo:make morps)))
+  (loop WHILE (not (fifo:empty-p que))
+        FOR x = (fifo:pop que)
+        FOR i FROM 0
+    DO
+    (when (zerop (mod i 1000))
+      (format t "~&; ~a: ~a~%" i (length que)))
+    (if (null (cdr x))
+        (push (list 0 (car x)) acc)
+      (progn
+        (push (list 1 (car x)) acc)
+        (fifo:push (cdr x) que))))
+  (nreverse acc))
+
+(defparameter *enc-morps* (fnfn *morps*))
+
+(with-open-file (out "/home/ohta/dev/java/sanmoku/dicbuilder/dic/morp.info.bin"
+                     :element-type '(unsigned-byte 8)
+                     :if-exists :supersede
+                     :direction :output)
+  (write-uint (length *enc-morps*) 4 out)
+  (loop FOR (_ v) IN *enc-morps*
+        DO
+        (write-uint v 2 out)))
+
+(defparameter *enc-bits* (mapcar #'car *enc-morps*))
+(loop WITH cnt = 0
+      WITH acc = '()
+      FOR b IN *enc-bits*
+      FOR i FROM 0
+  DO
+  (when (zerop (mod  i 64))
+    (push cnt acc))
+  (when (= b 1)
+    (incf cnt))
+  FINALLY
+  (defparameter *enc-cnts* (nreverse acc)))
+
+(loop WITH enc = 0
+      WITH acc = '()
+      FOR b IN *enc-bits*
+      FOR i FROM 0
+  DO
+  (when (= i 64)
+    (push enc acc)
+    (setf i 0
+          enc 0))
+  (setf (ldb (byte 1 i) enc) b)
+  
+  FINALLY
+  (defparameter *enc-ns* (nreverse (cons enc acc))))
+
+(with-open-file (out "/home/ohta/dev/java/sanmoku/dicbuilder/dic/morp.leaf.bin"
+                     :element-type '(unsigned-byte 8)
+                     :if-exists :supersede
+                     :direction :output)
+  (write-uint (length *enc-ns*) 4 out)
+  (loop FOR v IN *enc-ns*
+        DO
+        (write-uint v 8 out)))
+
+(with-open-file (out "/home/ohta/dev/java/sanmoku/dicbuilder/dic/morp.leaf.cnt.bin"
+                     :element-type '(unsigned-byte 8)
+                     :if-exists :supersede
+                     :direction :output)
+  (write-uint (length *enc-cnts*) 4 out)
+  (loop FOR v IN *enc-cnts*
+        DO
+        (write-uint v 2 out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; for code.bin
