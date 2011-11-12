@@ -28,10 +28,8 @@ public final class Matrix {
     
     public static short linkCost(short leftId, short rightId) {
         final int i = posid(leftId)*leftNum + posid(rightId);
-        //        System.err.println("# "+i+": "+matrix.length);
         final long n = node(i / 4);
         final int mi = (int)(n >> ((i % 4)*14)) & 0x3FFF;
-        //        System.err.println("# "+mi+": "+val.length);
         return (short)((val[mi*2]<<8) | (val[mi*2+1]&0xFF));
     }
 
