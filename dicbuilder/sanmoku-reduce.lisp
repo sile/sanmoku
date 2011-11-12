@@ -13,7 +13,7 @@
   (to-int (read-uint in byte-width) byte-width))
 
 (defun write-int (int stream &key (width 1))
-  (declare ((member 1 2 4 8) width))
+  (declare ((mod 9) width))
   (flet ((write-impl (pos)
            (write-byte (ldb (byte 8 (* pos 8)) int) stream)))
     (declare (inline write-impl))
@@ -127,3 +127,53 @@
       WHEN (/= i (gethash i *r*))
       DO
       (setf (gethash i *f*) (gethash (get-r i) *f*)))
+
+
+;;;;;;;;;;;;;;;;
+(defparameter *m2*
+  (flatten (load-matrix "/tmp/matrix.bin")))
+
+(defparameter *map*
+  (loop WITH m = (make-hash-table)
+        FOR b IN *m2*
+        UNLESS (gethash b m)
+        DO
+        (setf (gethash b m) (hash-table-count m))
+        FINALLY
+        (return m)))
+
+(defparameter *enc-m*
+  (loop WITH n = 0
+        WITH acc = '()
+        FOR a IN *m2*
+        FOR i FROM 0
+    DO
+    (when (= i 4)
+      (push n acc)
+      (setf i 0
+            n 0))
+    (setf (ldb (byte 14 (* 14 i)) n) (gethash a *map*))
+    FINALLY
+    (return (reverse (cons n acc)))))
+
+(with-open-file (out "/tmp/matrix.bin" 
+                     :direction :output
+                     :element-type '(unsigned-byte 8)
+                     :if-exists :supersede)
+  (let ((len (length (remove-duplicates (maphash-to-list #'list *f*) :key #'second))))
+    (write-int (length *enc-m*) out :width 4)
+    (write-int len out :width 4)
+    (loop FOR a IN *enc-m*
+          DO
+          (write-int a out :width 7)))
+  'done)
+
+(with-open-file (out "/tmp/matrix.map" 
+                     :direction :output
+                     :element-type '(unsigned-byte 8)
+                     :if-exists :supersede)
+  (write-int (hash-table-count *map*) out :width 4)
+  (loop FOR (v _) IN (sort (maphash-to-list #'list *map*) #'< :key #'second)
+        DO
+        (write-int v out :width 2))
+  'done)
