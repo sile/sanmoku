@@ -328,6 +328,12 @@
         DO
         (write-uint v 2 out)))
 
+(with-open-file (out "/home/ohta/dev/java/sanmoku/dicbuilder/dic/morp.base.bin"
+                     :element-type '(unsigned-byte 8)
+                     :if-exists :supersede
+                     :direction :output)
+  (write-uint (length *morps*) 4 out))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; for code.bin
 (defparameter *cd*

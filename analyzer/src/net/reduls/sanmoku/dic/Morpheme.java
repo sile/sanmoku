@@ -9,12 +9,14 @@ public final class Morpheme {
     private static final byte[] morpMap;
     private static final byte[] leafs;
     private static final byte[] leafAccCounts;
-
+    private static final int nextBase;
+    
     static {
         morps = Misc.readBytesFromFile("morp.info.bin", 2);
         morpMap = Misc.readBytesFromFile("morp.info.map", 4);
         leafs = Misc.readBytesFromFile("morp.leaf.bin", 8);
         leafAccCounts = Misc.readBytesFromFile("morp.leaf.cnt.bin", 2);
+        nextBase = Misc.readIntFromFile("morp.base.bin");
     }
 
     public static Iterable<Entry> getMorphemes(final int surfaceId) {
@@ -43,7 +45,7 @@ public final class Morpheme {
         final int offset = ((int)((leafAccCounts[i2*2+0]&0xFF)<<8) | 
                             (int)((leafAccCounts[i2*2+1]&0xFF)));
         final long mask = ((long)1 << (i%64))-1;
-        return 325882 + offset + Long.bitCount(leaf&mask);
+        return nextBase + offset + Long.bitCount(leaf&mask);
     }
     
     private static final long getLeaf(int i2) { 

@@ -104,4 +104,11 @@ public final class Misc {
         }
         return buf;
     }
+    
+    public static int readIntFromFile(String filename) {
+        DataInputStream in = Misc.openDictionaryDataAsDIS(filename);
+        int i = Misc.readInt(in);
+        Misc.close(in);
+        return i;
+    }
 }
