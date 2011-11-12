@@ -33,18 +33,49 @@ public final class Char {
                                             Misc.readByte(in));
         Misc.close(in);
         
-        charInfos = Misc.readBytesFromFile("code.bin", 3);
+        charInfos = Misc.readBytesFromFile("code.bin", 6);
     }
 
     public static final Category category(char c) {
-        return charCategorys[charInfos[(int)(c)*3]];
+        return charCategorys[findNode(c)>>16];
     }
 
     public static final boolean isCompatible(char c1, char c2) {
         return (compatibleMask(c1) & compatibleMask(c2)) != 0;
     }
 
-    private static final short compatibleMask(char c) {
-        return (short)((charInfos[(int)(c)*3+1]<<8) | charInfos[(int)(c)*3+2]&0xFF);
+    private static final int compatibleMask(char c) {
+        return findNode(c)&0xFFFF;
+    }
+
+    public static final int findNode (char c) {
+        int beg = 0;
+        int end = charInfos.length/6;
+
+        for(;;) {
+            int mid = beg+(end-beg)/2;
+            //                        System.out.println("# "+beg+" < "+mid+" < "+end+": "+(int)c+"="+nodeCode(mid));
+            if(end-beg == 1) {
+                return nodeValue(beg);
+            } else if(c < nodeCode(mid)) {
+                end = mid;
+            } else if(c >= nodeCode(mid)) {
+                beg = mid;
+            }
+        }
+    }
+    
+    public static final int nodeCode (int i) {
+        return 
+            (int)((charInfos[i*6+0]&0xFF)<<16) |
+            (int)((charInfos[i*6+1]&0xFF)<<8) |
+            (int)((charInfos[i*6+2]&0xFF)<<0);
+    }
+
+    public static final int nodeValue (int i) {
+        return 
+            (int)((charInfos[i*6+3]&0xFF)<<16) |
+            (int)((charInfos[i*6+4]&0xFF)<<8) |
+            (int)((charInfos[i*6+5]&0xFF)<<0);
     }
 }

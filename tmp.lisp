@@ -189,3 +189,34 @@
   (let ((m (make-hash-table)))
     (dolist (p *p* m)
       (incf (gethash p m 0)))))
+
+(defparameter *cc* 
+  (let ((m (make-hash-table)))
+    (dolist (p *c* m)
+      (incf (gethash p m 0)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; for code.bin
+(defparameter *cd*
+  (with-open-file (in "/home/ohta/dev/java/sanmoku/dicbuilder/dic/code.bin"
+                      :element-type '(unsigned-byte 8))
+    (let ((count (read-int in 4)))
+      (loop FOR i FROM 0 BELOW count
+            COLLECT (list i (read-int in 3))))))
+
+(defparameter *cd2*
+  (loop FOR pred IN (cons nil *cd*)
+        FOR cur IN *cd*
+        UNLESS (eql (second pred) (second cur))
+    COLLECT cur INTO list
+    FINALLY (return (append list `((#x10000 0))))))
+
+(with-open-file (out "/home/ohta/dev/java/sanmoku/dicbuilder/dic/code.bin"
+                     :direction :output
+                     :element-type '(unsigned-byte 8)
+                     :if-exists :supersede)
+  (write-uint (length *cd2*) 4 out)
+  (loop FOR (code val) IN *cd2*
+        DO
+        (write-uint code 3 out)
+        (write-uint val 3 out)))
