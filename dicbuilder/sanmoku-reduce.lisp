@@ -42,11 +42,11 @@
 
 (defparameter *m* (load-matrix "/home/ohta/dev/java/sanmoku/dicbuilder/dic/matrix.bin"))
 
-
-(defun calc (as bs)
-  (sqrt (/ (loop FOR a IN as
-                 FOR b IN bs
-                 SUM (expt (- a b) 2))
+(defun calc (as bs &optional (n 1))
+  (declare ((mod 10) n))
+  (sqrt (/ (loop FOR a fixnum IN as
+                 FOR b fixnum IN bs
+                 SUM (expt (- (ash a (- n)) (ash b (- n))) 2))
            (length as))))
 
 (defparameter *r* (make-hash-table))
@@ -54,29 +54,34 @@
       DO
       (setf (gethash i *r*) i))
 
-(defun merge1 (border)
+(defun merge1 (border &optional (limit 0.2))
   (loop FOR a IN *m*
         FOR i FROM 0
         WHEN (and (/= i 0)
-                  (<= border (/ 10 (gethash i *pc*)))
+;;                  (<= border (/ 10 (gethash i *pc*)))
                   (= i (gethash i *r*)))
     DO
-    (when (zerop (mod i 10))
+    (when (zerop (mod i 50))
       (format t "~&; ~a~%" i))
     (loop FOR b IN *m*
           FOR j FROM 0
           WHEN (and (/= j 0)
                     (not (eq a b))
                     (= j (gethash j *r*)))
-          WHEN (<= (calc a b) border)
+          WHEN (<= (calc a b border) limit)
       DO
-      (setf (gethash i *r*) j)))
+      (setf (gethash i *r*) j)
+      ))
   'done)
 
-(loop FOR i FROM 0 BELOW 10
-      DO
-      (format t "~2&;; ~a~%" i)
-      (merge1 i))
+(progn
+  (merge1 0 0)
+  (loop FOR i FROM 0 TO 5
+        DO
+        (loop FOR limit IN '(0.1 0.26)
+              DO
+              (format t "~2&;; ~a# ~a~%" i limit)
+              (merge1 i limit))))
 
 (defun get-r (i)
   (let ((v (gethash i *r*)))
@@ -93,7 +98,6 @@
         DO
         (write-int (second a) out :width 2))
   'done)
-
 
 (with-open-file (out "/tmp/matrix.bin"
                      :direction :output
@@ -123,5 +127,3 @@
       WHEN (/= i (gethash i *r*))
       DO
       (setf (gethash i *f*) (gethash (get-r i) *f*)))
-
-      
