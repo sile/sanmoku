@@ -5,12 +5,12 @@
            build
            load
            member?
-           get-id
-           each-common-prefix
-           each-predictive))
+           get-id))
 (in-package :dawg)
 
 (package-alias :dawg.octet-stream :stream)
+
+(deftype uint5 () '(unsigned-byte 40))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;;; special variable
@@ -22,8 +22,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; dawg (double-array format)
 (defstruct dawg
-  (node #() :type (simple-array uint8))
-  (ext  #() :type (simple-array uint4)))
+  (node #() :type (simple-array uint1))
+  (ext  #() :type (simple-array uint4))
+  (char-map #() :type (simple-array uint1)))
 
 (defmethod print-object ((o dawg) stream)
   (print-unreadable-object (o stream :type t :identity t)
@@ -33,15 +34,21 @@
 ;;; declamation
 (declaim (inline check-encoded-children get-node 
                  base chck terminal? sibling-total inc-id 
-                 get-id-impl member?-impl
-                 each-common-prefix-impl each-predictive-impl)
+                 get-id-impl member?-impl)
          (ftype (function #.*args-type* boolean) member?)
          (ftype (function #.*args-type* (or null positive-fixnum)) get-id))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auxiliary function(1)
+(defun read-count (filepath byte-order)
+  (with-open-file (in filepath :element-type 'uint4)
+    (if (or (eq byte-order :native)
+            (eq byte-order +NATIVE_ORDER+))
+        (read-byte in)
+      (byte-reverse (read-byte in) 4))))
+
 (defun read-array (index-path &key size element-type offset byte-order)
-  (declare ((member uint4 uint8) element-type))
+  (declare ((member uint1 uint4 uint8) element-type))
   (with-open-file (in index-path :element-type element-type)
     (file-position in offset)
     (let ((ary (make-array size :element-type element-type)))
@@ -49,6 +56,7 @@
       (unless (or (eq byte-order :native)
                   (eq byte-order +NATIVE_ORDER+))
         (let ((byte-size (ecase element-type
+                           (uint1 1)
                            (uint4 4)
                            (uint8 8))))
           (dotimes (i size)
@@ -71,57 +79,69 @@
 (defun load (index-path &key (byte-order :native))
   (declare ((or string pathname file-stream) index-path)
            ((member :native :little :big) byte-order))
-  (let ((sizes (read-array index-path :size 2 :element-type 'uint4 :offset 0 
-                           :byte-order byte-order)))
+  (let ((char-path (format nil "~a.char" index-path))
+        (ext-path (format nil "~a.ext" index-path))
+        (node-path (format nil "~a.node" index-path)))
     (make-dawg
-     :node (read-array index-path :element-type 'uint8
-                                  :size (/ (aref sizes 0) 8)
-                                  :offset 1
-                                  :byte-order byte-order)
-     :ext  (read-array index-path :element-type 'uint4
-                                  :size (/ (aref sizes 1) 4)
-                                  :offset (+ 2 (/ (aref sizes 0) 4))
-                                  :byte-order byte-order))))
+     :node (read-array node-path :size (read-count node-path byte-order) 
+                                 :element-type 'uint1 :offset 4 :byte-order byte-order)
+     :ext (read-array ext-path :size (floor (read-count ext-path byte-order) 4)
+                               :element-type 'uint4 :offset 1 :byte-order byte-order)
+     :char-map (read-array char-path :size #x100 :element-type 'uint1 :byte-order byte-order))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; auxiliary function(2)
 (declaim (inline %type))
-(defun terminal? (node) (ldb-test (byte 1 31) (the uint8 node)))
-(defun base (node) (ldb (byte 29  0) (the uint8 node)))
-(defun chck (node) (ldb (byte  8 32) (the uint8 node)))
-(defun %type (node) (ldb (byte 2 29) (the uint8 node)))
+(defun terminal? (node) (ldb-test (byte 1 19) (the uint5 node)))
+(defun base (node) (ldb (byte 19  0) (the uint5 node)))
+(defun chck (node) (ldb (byte  7 20) (the uint5 node)))
+(defun %type (node)
+  (declare (uint5 node))
+  (if (ldb-test (byte 1 39) node)
+      (+ 2 (ldb (byte 1 38) node))
+    0))
 
 (defun sibling-total (da node)
-  (ecase (%type node)
-    (0 (ldb (byte  8 56) node))
-    (1 (ldb (byte 16 48) node))
-    (2 (ldb (byte 24 40) node))
-    (3 (aref (dawg-ext da)
-             (ldb (byte 24 40) node)))))
+  (case (%type node)
+    (0 (ldb (byte  5 34) node))
+    (2 (ldb (byte 11 27) node))
+    (t (aref (dawg-ext da)
+             (ldb (byte 11 27) node)))))
 
 (defun inc-id (id da node)
   (let ((terminal (if (terminal? node) 1 0))
         (sibling-total (sibling-total da node)))
     (the uint4 (+ id terminal sibling-total))))
 
-(defun check-encoded-children (in node)
-  (declare (uint8 node))
-  (labels ((enc-chck (n)
-             (ldb (byte 8 (+ 40 (* 8 n))) node))
-           (check (n &aux (chck (enc-chck n)))
+(defun arc (char dawg)
+  (aref (dawg-char-map dawg) char))
+
+(defun check-encoded-children (in node dawg)
+  (declare (uint5 node))
+  (labels ((enc-chck ()
+             (ldb (byte 7 27) node))
+           (check (&aux (chck (enc-chck)))
              (or (zerop chck)
-                  (and (= chck (stream:read in))
+                  (and (= chck (arc (stream:read in) dawg))
                        (not (stream:eos? in))))))
     (declare (inline enc-chck check))
     (case (%type node)
-      (0 (and (check 0) (check 1)))
-      (1 (check 0))
+      (0 (check))
       (t t))))
 
 (defun get-node (dawg index)
   (declare (dawg dawg)
            (positive-fixnum index))
-  (aref (dawg-node dawg) index))
+  (with-slots (node) (the dawg dawg)
+    (let ((n 0)
+          (i (* index 5)))
+      (declare (uint5 n))
+      (setf (ldb (byte 8 32) n) (aref node (+ i 0))
+            (ldb (byte 8 24) n) (aref node (+ i 1))
+            (ldb (byte 8 16) n) (aref node (+ i 2))
+            (ldb (byte 8 08) n) (aref node (+ i 3))
+            (ldb (byte 8 00) n) (aref node (+ i 4)))
+      n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; external function(2)
@@ -129,8 +149,8 @@
   (nlet recur ((node (get-node dawg 0)))
     (if (stream:eos? in)
         (terminal? node)
-      (when (check-encoded-children in node)
-        (let* ((arc (stream:read in))
+      (when (check-encoded-children in node dawg)
+        (let* ((arc (arc (stream:read in) dawg))
                (next (get-node dawg (+ (base node) arc))))
           (when (= (chck next) arc)
             (recur next)))))))
@@ -139,48 +159,11 @@
   (nlet recur ((node (get-node dawg 0)) (id -1))
     (if (stream:eos? in)
         (and (terminal? node) (inc-id id dawg node))
-      (when (check-encoded-children in node)
-        (let* ((arc (stream:read in))
+      (when (check-encoded-children in node dawg)
+        (let* ((arc (arc (stream:read in) dawg))
                (next (get-node dawg (+ (base node) arc))))
           (when (= (chck next) arc)
             (recur next (inc-id id dawg node))))))))
-
-(defun each-common-prefix-impl (fn in dawg)
-  (nlet recur ((node (get-node dawg 0)) (id -1))
-    (when (terminal? node)
-      (funcall fn (inc-id id dawg node) (stream:position in)))
-    (unless (stream:eos? in)
-      (when (check-encoded-children in node)
-        (let* ((arc (stream:read in))
-               (next (get-node dawg (+ (base node) arc))))
-          (when (= (chck next) arc)
-            (recur next (inc-id id dawg node))))))))
-
-(defun traverse-descendant (fn dawg node id)
-  (declare #.*fastest*
-           (function fn)
-           (dawg dawg)
-           (uint8 node)
-           (fixnum id))
-  (when (terminal? node)
-    (funcall fn (inc-id id dawg node)))
-  (loop FOR arc FROM 1 BELOW +ARC_LIMIT+ 
-        FOR next OF-TYPE uint8 = (get-node dawg (+ (base node) arc))
-        WHEN (= (chck next) arc)
-      DO
-      (traverse-descendant fn dawg next (inc-id id dawg node))))
-
-(defun each-predictive-impl (fn in dawg)
-  (nlet recur ((node (get-node dawg 0)) (id -1))
-    (declare (fixnum id))
-    (if (stream:eos? in)
-        (traverse-descendant fn dawg node id)
-      (when (check-encoded-children in node)
-        (let* ((arc (stream:read in))
-               (next (get-node dawg (+ (base node) arc))))
-          (when (= (chck next) arc)
-            (recur next (inc-id id dawg node))))))))
-
 
 (defmacro with-key-stream ((in key &key start end) &body body)
   (let ((k (gensym))
@@ -205,33 +188,5 @@
 (defun get-id (key dawg &key (start 0) (end (length key)))
   (with-key-stream (in key :start start :end end)
     (get-id-impl in dawg)))
-
-(defmacro each-common-prefix ((match-id match-end)
-                              (key dawg &key (start 0) (end `(length ,key)))
-                              &body body)
-  (let ((in (gensym)))
-    `(block nil
-       (with-key-stream (,in ,key :start ,start :end ,end)
-         (each-common-prefix-impl 
-          (lambda (,match-id ,match-end)
-            (declare (positive-fixnum ,match-id)
-                     (array-index ,match-end))
-            ,@body)
-          ,in ,dawg))
-       t)))
-
-(defmacro each-predictive ((match-id)
-                           (key dawg &key (start 0) (end `(length ,key)))
-                           &body body)
-  (let ((in (gensym)))
-    `(block nil
-       (with-key-stream (,in ,key :start ,start :end ,end)
-         (each-predictive-impl 
-          (lambda (,match-id)
-            (declare (positive-fixnum ,match-id))
-            ,@body)
-          ,in ,dawg))
-       t)))
-
 
 (package-alias :dawg.octet-stream)
