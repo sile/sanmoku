@@ -1,0 +1,79 @@
+[概要]
+・ハッシュテーブル
+
+[バージョン]
+・0.2.0
+
+[API]
+= package# dict
+　メインパッケージ
+
+= function# (make &key (test 'eql) (size 8) (rehash-threshold 1.0)) => dict
+　ハッシュテーブルを作成する。
+　- test: キーのハッシュ値 及び 等値性判定方法を指定する。
+　　　　　(or 'eq 'eql 'equal 'equalp)の中から選択可能。
+　　　　　define-testマクロを使って、独自の方法を定義可能。
+　　　　　※ generate-test関数の返り値でも可
+　　　　　
+　- size: ハッシュテーブルの初期サイズのヒント
+　- rehash-threshold: リハッシュ判定の閾値
+
+= function# (count dict) => count
+　ハッシュテーブルに格納されている要素数を取得する。
+
+= function# (get key dict &optional (default nil)) => (values value bool)
+　キーに紐付く値を取得する。
+　該当する値がある場合は(values 値 t)が、ない場合は(values default nil)が返る。
+
+= function# (setf (get key dict) new-value) => new-value
+　キーに値を紐付ける。
+　既にキーがハッシュテーブル内に存在する場合は、その値が更新される。
+　存在しない場合は、キーと値が新たに追加される。
+
+= function# (remove key dict) => bool
+　キーに対応する要素をハッシュテーブルから削除する。
+　該当する要素が存在していた場合はtを、そうでない場合はnilを返す。
+
+= function# (clear dict) => t
+　ハッシュテーブル内の全要素を消去する
+
+= function# (map fn dict) => list
+　ハッシュテーブル内の各要素に関数fnを適用し、その結果をリストにして返す。
+
+= macro# (each (entry dict &optoinal result-form) &body body) => result-form
+　ハッシュテーブル内の各要素を走査する。
+　走査中の要素がentryに束縛された状態で、bodyが実行される。
+　全ての走査が終了した後、result-formが実行され、その結果が式の返り値となる。
+
+= macro# (define-test name hash test)
+　make関数に渡すテスト方法を定義する。
+　このマクロで定義したテスト方法は、グローバルなテスト一覧に登録され、find-test関数で検索可能。
+　- name: テスト方法の名前
+　- hash: ハッシュ関数 (or symbol lambda)
+　- test: テスト関数 (or symbol lambda)
+ 
+  使用例:
+  (define-test number identity =)
+  (define-test string (lambda (s)
+                         (declare (string s))
+                         (sxhash s))
+                      (lambda (s1 s2)
+                         (string= s1 s2)))
+
+= macro# (generate-test hash test &key (name :anonymous))
+　make関数に渡すテスト方法を生成する。
+　- name: テスト方法の名前
+　- hash: ハッシュ関数 (or symbol lambda)
+　- test: テスト関数 (or symbol lambda)
+
+= function# (undef-test name)
+　テスト方法の登録を解除する
+
+= function# (find-test name)
+　テスト方法を検索する
+
+= function# (list-all-tests)
+　登録済みのテスト方法(の名前)リストを返す
+
+= function# (test-name dict)
+　ハッシュテーブルが使用しているテスト方法の名前を返す。
