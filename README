@@ -42,6 +42,16 @@ class Morpheme {
 }
 
 
+[辞書構築方法メモ]
+$ cd dicbuilder
+$ sbcl --script make-build-dic-command.lisp
+$ ./sanmoku-build-dic ~/downloads/mecab-ipadic-2.7.0-20070801/ dic/
+$ sbcl --script reduce.lisp dic/
+$ cp dic/* ../analyzer/src/net/reduls/sanmoku/dicdata/
+$ cd ../analyzer
+$ ant
+
+
 [ライセンス]
 ・Sanmoku本体(ソースファイル及びjarファイル)
 　・MITライセンス: 詳細はCOPYINGファイルを参照

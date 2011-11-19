@@ -33,6 +33,12 @@
     (recur list)
     (nreverse acc)))
 
+(defun maphash-to-list (fn hashtable &aux acc)
+  (maphash (lambda (k v)
+             (push (funcall fn k v) acc))
+           hashtable)
+  (nreverse acc))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; for morpheme.bin
 
