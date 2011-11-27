@@ -53,6 +53,27 @@
              *f*)
     (nreverse fs)))
 
+(defparameter *f3*
+  (let ((m (make-hash-table :test #'equal)))
+    (maphash (lambda (k ms)
+               (loop FOR (_1 _2 baseform yomi hatuon) IN ms
+                 DO
+                 (let ((type (+ (if (string= k baseform) 1 0)
+                                (ash (if (string= yomi hatuon) 1 0) 1))))
+                   (push (case type
+                           (#b00 (list type baseform yomi hatuon))
+                           (#b01 (list type yomi hatuon))
+                           (#b10 (list type baseform yomi))
+                           (#b11 (list type yomi)))
+                         (gethash k m)))))
+             *f*)
+    (let ((acc '()))
+      (maphash (lambda (k vs)
+                 (push (list k vs) acc))
+               m)
+      (mapcar #'second (sort acc #'string< :key #'first)))))
+
+
 ;; type:
 ;; b00# surface /= baseform and yomi /= hatuon
 ;; b01# surface == baseform and yomi /= hatuon
@@ -129,7 +150,7 @@
                      :direction :output
                      :if-exists :supersede
                      :element-type '(unsigned-byte 8))
-  (loop FOR (type . fs) IN *f2*
+  (loop FOR (type . fs) IN *f4*
     DO
     (multiple-value-bind (baseform yomi/hatu)
                          (case type 
@@ -146,3 +167,21 @@
         (write-uint n 6 out))))
   'done)
     
+(load "fifo")
+
+;; see# reduce.lisp:fnfn
+(defun fnfn (morps &aux acc (que (fifo:make (copy-seq morps))))
+  (loop WHILE (not (fifo:empty-p que))
+        FOR x = (fifo:pop que)
+        FOR i FROM 0
+    DO
+    (when (zerop (mod i 10000))
+      (format t "~&; ~a: ~a~%" i (length que)))
+    (if (null (cdr x))
+        (push (list 0 (car x)) acc)
+      (progn
+        (push (list 1 (car x)) acc)
+        (fifo:push (cdr x) que))))
+  (nreverse acc))
+
+(defparameter *f4* (mapcar #'second (fnfn *f3*)))
