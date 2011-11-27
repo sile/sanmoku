@@ -9,9 +9,9 @@
 
   <target name="jar" depends="compile">
     <jar jarfile="sanmoku-feature-ex-${version}.jar" basedir="${classes.dir}">
-      <metainf dir=".">
+      <!--metainf dir=".">
 	<include name="COPYING" />
-      </metainf>
+      </metainf-->
     </jar>
   </target>
 
@@ -25,11 +25,11 @@
         <include name="*.map" />
       </fileset>
     </copy>
-    <copy todir="${classes.dir}">
+    <!--copy todir="${classes.dir}">
       <fileset dir="${src.dir}/../..">
         <include name="COPYING*" />
       </fileset>
-    </copy>
+    </copy-->
   </target>
 
   <target name="javadoc">
