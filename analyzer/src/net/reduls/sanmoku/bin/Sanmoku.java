@@ -3,7 +3,6 @@ package net.reduls.sanmoku.bin;
 import java.io.IOException;
 import net.reduls.sanmoku.Tagger;
 import net.reduls.sanmoku.Morpheme;
-import net.reduls.sanmoku.FeatureEx;
 import net.reduls.sanmoku.util.ReadLine;
 
 public final class Sanmoku {
@@ -24,10 +23,8 @@ public final class Sanmoku {
 	    }
 	else
 	    for(String s=rl.read(); s != null; s=rl.read()) {
-		for(Morpheme m : Tagger.parse(s)) {
-                    FeatureEx fe = new FeatureEx(m);
-		    System.out.println(m.surface+"\t"+m.feature+","+fe.baseform+","+fe.reading+","+fe.pronunciation);
-                }
+		for(Morpheme m : Tagger.parse(s))
+		    System.out.println(m.surface+"\t"+m.feature);
 		System.out.println("EOS");
 	    }
     }   

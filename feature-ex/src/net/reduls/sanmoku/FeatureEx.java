@@ -71,7 +71,6 @@ public final class FeatureEx {
 
     private static String text(int start, int length) {
         try {
-            System.out.println(start+": "+length);
             return new String(data, start*2, length*2, "UTF-16BE");
         } catch (java.io.UnsupportedEncodingException ex) {
             throw new RuntimeException(ex);
