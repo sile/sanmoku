@@ -19,15 +19,20 @@
 
 (defun read-features (dir &optional (sb-impl::*default-external-format* :euc-jp))
   (loop WITH map = (make-hash-table :test #'equal)
-        FOR path IN (directory (format nil "~a/*.csv" dir))
+        FOR path IN (cons (format nil "~a/unk.def" dir)
+                          (directory (format nil "~a/*.csv" dir)))
     DO
     (with-open-file (in path)
       (loop FOR line = (read-line in nil nil)
             WHILE line
         DO
-        (destructuring-bind (surface pos-id _2 cost _4 _5 _6 _7 _8 _9 baseform yomi hatuon)
+        (destructuring-bind (surface pos-id _2 cost _4 _5 _6 _7 _8 _9 baseform &optional (yomi "") (hatuon ""))
                             (split line #\,)
           (declare (ignore _2 _4 _5 _6 _7 _8 _9))
+          (when (string= yomi "")
+            (print surface)
+            (setf surface (format nil "~c~a" (code-char 1) surface)
+                  baseform ""))
           (push (list (parse-integer pos-id) (parse-integer cost) baseform yomi hatuon)
                 (gethash surface map)))))
     FINALLY
@@ -37,6 +42,7 @@
     (return map)))
 
 (defparameter *f* (read-features "/home/ohta/downloads/mecab-ipadic-2.7.0-20070801/"))
+
 (defparameter *f2*
   (let ((fs '()))
     (maphash (lambda (k ms)
@@ -127,6 +133,23 @@
                      :direction :output
                      :if-exists :supersede
                      :element-type '(unsigned-byte 8))
+  (let ((size (loop WITH offset = 0 
+                    FOR m IN (list *data1* *data2*)
+                    DO
+                    (maphash (lambda (k v)
+                               (declare (ignore v))
+                               (incf offset (if (listp k)
+                                                (let ((a (+ (1- (length k))
+                                                            (loop FOR x IN k SUM (length x)))))
+                                                  (if (= a 65)
+                                                      0
+                                                    a))
+                                              (length k))))
+                             m)
+                    FINALLY
+                    (return offset))))
+    (write-uint size 4 out))
+                             
   (loop WITH offset = 0
         FOR m IN (list *data1* *data2*)
     DO
@@ -150,6 +173,7 @@
                      :direction :output
                      :if-exists :supersede
                      :element-type '(unsigned-byte 8))
+  (write-uint (length *f4*) 4 out)
   (loop FOR (type . fs) IN *f4*
     DO
     (multiple-value-bind (baseform yomi/hatu)
@@ -160,7 +184,7 @@
                            (#b11 (values nil fs)))
       (let ((n 0))
         (declare ((unsigned-byte 48) n))
-        (setf (ldb (byte 17  0) n) (or (gethash baseform *data1*) -1)
+        (setf (ldb (byte 17  0) n) (or (gethash baseform *data1*) -1)  ;; XXX: 14で十分
               (ldb (byte 21 17) n) (or (gethash yomi/hatu *data2*) -1)
               (ldb (byte  4 38) n) (length baseform)
               (ldb (byte  6 42) n) (length yomi/hatu))
