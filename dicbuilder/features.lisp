@@ -182,12 +182,13 @@
                            (#b01 (values nil fs))
                            (#b10 (values (car fs) (cdr fs)))
                            (#b11 (values nil fs)))
-      (let ((n 0))
+      (let ((n 0)
+            (yomi/hatu/2 (format nil "~{~a~^,~}" yomi/hatu)))
         (declare ((unsigned-byte 48) n))
         (setf (ldb (byte 17  0) n) (or (gethash baseform *data1*) -1)  ;; XXX: 14で十分
-              (ldb (byte 21 17) n) (or (gethash yomi/hatu *data2*) -1)
+              (ldb (byte 21 17) n) (or #1=(gethash yomi/hatu *data2*) 0)
               (ldb (byte  4 38) n) (length baseform)
-              (ldb (byte  6 42) n) (length yomi/hatu))
+              (ldb (byte  6 42) n) (if #1# (length yomi/hatu/2) 0))
         (write-uint n 6 out))))
   'done)
     

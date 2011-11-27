@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="sanmoku-feature-ex" default="jar"  basedir=".">
+  <property name="version" value="0.0.1" />
+  <property name="sanmoku.version" value="0.0.5" />
+  <property name="src.dir" value="src"/>
+  <property name="classes.dir" value="classes"/>
+  <property name="javadoc.dir" value="docs"/>
+
+  <target name="jar" depends="compile">
+    <jar jarfile="sanmoku-feature-ex-${version}.jar" basedir="${classes.dir}">
+      <metainf dir=".">
+	<include name="COPYING" />
+      </metainf>
+    </jar>
+  </target>
+
+  <target name="compile">
+    <mkdir dir="${classes.dir}" />
+    <javac debug="off" encoding="UTF-8" srcdir="${src.dir}" destdir="${classes.dir}" 
+           classpath="../analyzer/sanmoku-${sanmoku.version}.jar" />
+    <copy todir="${classes.dir}/net/reduls/sanmoku/dicdata">
+      <fileset dir="${src.dir}/net/reduls/sanmoku/dicdata">
+        <include name="*.bin*" />
+        <include name="*.map" />
+      </fileset>
+    </copy>
+    <copy todir="${classes.dir}">
+      <fileset dir="${src.dir}/../..">
+        <include name="COPYING*" />
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="javadoc">
+    <javadoc destdir="${javadoc.dir}">
+      <fileset dir="${src.dir}"/>
+    </javadoc>
+  </target>
+ 
+  <target name="clean">
+    <delete dir="${classes.dir}" />
+    <delete dir="${javadoc.dir}" />
+    <delete file="${jar.name}" />
+  </target>
+</project>

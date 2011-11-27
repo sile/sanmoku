@@ -2,8 +2,27 @@ package net.reduls.sanmoku;
 
 import net.reduls.sanmoku.util.Misc;
 
-// => FeatureEx
-public final class Feature {
+public final class FeatureEx {
+    //
+    public final String baseform;
+    public final String reading;
+    public final String pronunciation;
+
+    public FeatureEx(Morpheme m) {
+        final long info = info(m.morphemeId);
+        baseform = baseform(info, m);
+
+        final String rp = reading_pronunciation(info);
+        final int i = rp.indexOf(",");
+        if(i==-1) {
+            reading = pronunciation = rp;
+        } else {
+            reading = rp.substring(0, i);
+            pronunciation = rp.substring(i+1);
+        } 
+    }
+
+    //
     private static final byte[] info;
     private static final byte[] data;
 
@@ -12,14 +31,17 @@ public final class Feature {
         data = Misc.readBytesFromFile("feature.text.bin", 2);
     }
 
-    public static String baseform(Morpheme m) {
-        long info = info(m.morphemeId);
-        int baseformOffset = baseformOffset(info);
+    private static String baseform(long info, Morpheme m) {
+        final int baseformOffset = baseformOffset(info);
         if(baseformOffset == 0x1FFFF)
             return m.surface;
-        int baseformLength = baseformLength(info);
+        final int baseformLength = baseformLength(info);
         
         return text(baseformOffset, baseformLength);
+    }
+
+    private static String reading_pronunciation(long info) {
+        return text(rpOffset(info), rpLength(info));
     }
 
     private static long info(int i) {
@@ -37,6 +59,14 @@ public final class Feature {
 
     private static int baseformLength(long info) {
         return (int)((info >> 38) & 0xF);
+    }
+
+    private static int rpOffset(long info) {
+        return (int)((info >> 17) & 0x1FFFFF);
+    }
+
+    private static int rpLength(long info) {
+        return (int)((info >> 42) & 0x3F);
     }
 
     private static String text(int start, int length) {
