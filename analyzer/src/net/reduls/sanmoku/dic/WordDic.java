@@ -17,6 +17,7 @@ public final class WordDic {
         for(Morpheme.Entry e : Morpheme.getMorphemes(surfaceId))
             fn.call(new ViterbiNode(start, (short)length,
                                     e.cost, e.posId,
-                                    isSpace));
+                                    isSpace,
+                                    e.morphemeId));
     }
 }

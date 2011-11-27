@@ -22,7 +22,7 @@ public final class Tagger {
         for(ViterbiNode vn=parseImpl(text); vn!=null; vn=vn.prev) {
             final String surface = text.substring(vn.start, vn.start+vn.length());
             final String feature = PartsOfSpeech.get(vn.posId());
-            result.add(new Morpheme(surface, feature, vn.start));
+            result.add(new Morpheme(surface, feature, vn.start, vn.morphemeId));
         }
         return result;
     }

@@ -85,11 +85,14 @@ public final class Morpheme {
     static class Entry {
         public final short posId;
         public final short cost;
+        public final int morphemeId;
         
         private Entry(int i) {
             final int m = (int)((morps[i*2+0]&0xFF)<<8) | (int)(morps[i*2+1]&0xFF);
             posId = (short)((short)(morpMap[m*4+0]<<8) | (short)(morpMap[m*4+1]&0xFF));
             cost = (short)((short)(morpMap[m*4+2]<<8) | (short)(morpMap[m*4+3]&0xFF));
+
+            morphemeId = i;
         }
     }
 }
