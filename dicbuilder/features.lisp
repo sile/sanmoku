@@ -62,16 +62,16 @@
 (defparameter *f3*
   (let ((m (make-hash-table :test #'equal)))
     (maphash (lambda (k ms)
-               (loop FOR (_1 _2 baseform yomi hatuon) IN ms
-                 DO
-                 (let ((type (+ (if (string= k baseform) 1 0)
-                                (ash (if (string= yomi hatuon) 1 0) 1))))
-                   (push (case type
+               (setf (gethash k m)
+                     (loop FOR (_1 _2 baseform yomi hatuon) IN ms
+                       COLLECT
+                       (let ((type (+ (if (string= k baseform) 1 0)
+                                      (ash (if (string= yomi hatuon) 1 0) 1))))
+                         (case type
                            (#b00 (list type baseform yomi hatuon))
                            (#b01 (list type yomi hatuon))
                            (#b10 (list type baseform yomi))
-                           (#b11 (list type yomi)))
-                         (gethash k m)))))
+                           (#b11 (list type yomi)))))))
              *f*)
     (let ((acc '()))
       (maphash (lambda (k vs)
