@@ -163,7 +163,7 @@
   (maphash (lambda (k ms)
              (push ms acc))
            morps-map)
-  (nreverse acc))
+  (sort acc #'string< :key (lambda (x) (morpheme-surface (car x)))))
 
 ;; almost the same as 'reduce.lisp:fnfn'
 (defun depthfirst-sort (morps &aux acc (que (fifo:make (copy-seq morps))))
