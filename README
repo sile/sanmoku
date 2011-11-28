@@ -55,7 +55,7 @@ class Morpheme {
 // - sanmoku-feature-ex-0.0.1.jar
 class FeatureEx { 
   public FeatureEx(Morpheme m);      // 形態素インスタンスから素性インスタンスを構築
-  public final String baseform;      // 原型: 対応する情報がない場合は空文字列を返す (以下同じ) 
+  public final String baseform;      // 原型: 対応する情報がない場合は空文字列を返す (以下同) 
   public final String reading;       // 読み:
   public final String pronunciation; // 発音:
 }
