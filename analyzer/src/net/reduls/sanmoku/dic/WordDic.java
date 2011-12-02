@@ -4,7 +4,7 @@ import java.util.List;
 
 public final class WordDic {
     public static interface Callback {
-        public void call(ViterbiNode vn);
+        public void call(ViterbiNode vn, boolean isSpace);
         public boolean isEmpty();
     }
 
@@ -17,7 +17,7 @@ public final class WordDic {
         for(Morpheme.Entry e : Morpheme.getMorphemes(surfaceId))
             fn.call(new ViterbiNode(start, (short)length,
                                     e.cost, e.posId,
-                                    isSpace,
-                                    e.morphemeId));
+                                    e.morphemeId),
+                    isSpace);
     }
 }
